@@ -1,0 +1,26 @@
+﻿@page "/groups"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HttpClient Http
+<h3>GroupsList</h3>
+@if(_groups is null)
+ {
+    <p>Not foun group</p>
+ }
+else
+ {
+     @foreach (var group in _groups)
+      {
+        var link = $"groups/{group}";
+        <MudLink Href="@link">@group</MudLink> <br />
+      }
+ }
+
+@code {
+    private HubConnection? _hubConnection;
+    private List<string> _groups  = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _groups = await Http.GetFromJsonAsync<List<string>>("https://localhost:7163/api/Account/groups");
+    }
+}

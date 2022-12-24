@@ -1,0 +1,43 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HttpClient Http
+<h1>Id: @_hubConnection?.ConnectionId</h1>
+@foreach (var item in _messages)
+{
+    <p>@item</p>
+}
+<MudTextField T="string" @bind-Value="@message"></MudTextField>
+<MudButton OnClick="SendMessage">Send</MudButton>
+
+@code {
+    private string? message{ get; set; }
+    private readonly List<string> _messages = new List<string>();
+    private  HubConnection? _hubConnection;
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+        .WithUrl("https://localhost:7163/chathub")
+        .Build(); // api ni blazorga ulash page ochilgan paytda connectionid generate qiladi
+        _hubConnection.On<string,string>(nameof(GetMessage), GetMessage);
+        await _hubConnection.StartAsync();
+        // apidan getmessage keyli ma'lumotni olib GetMessage funksiyasini chaqiradi va undan kelgan string
+        // typedagi messageni getmessage funksiyasiga beradi 
+    }
+
+    private void GetMessage(string username , string message)
+    {
+        _messages.Add($"{username}:{message}");
+        StateHasChanged();
+    }
+
+    private async Task SendMessage()
+    {
+        //hubconnection null emasmi
+        if(_hubConnection?.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync(nameof(SendMessage), message);
+            // apini SendMessage funksiyasiga hello messageni jo'natadi u esa yana Clientni hamma funksiyasiga bu xabarni jo'natadi
+        }
+    }
+}
+
